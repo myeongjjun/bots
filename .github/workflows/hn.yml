@@ -1,8 +1,6 @@
 name: hn_recommender
 
 on:
-  schedule:
-    - cron: '0 * * * *'     # 매 정각(UTC) 실행
   workflow_dispatch:
 
 jobs:
@@ -16,9 +14,9 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
 
-      - run: uv pip install --system -r requirements.txt
+      - run: uv sync --frozen
       - name: Run hn_recommender.py
-        run: python hn_recommender.py
+        run: uv run python hn_recommender.py
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
