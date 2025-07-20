@@ -18,7 +18,7 @@ jobs:
 
       - run: uv pip install --system -r requirements.txt
       - name: Run hn_recommender.py
-        run: python hn_recommender/hn_recommender.py
+        run: python hn_recommender.py
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
