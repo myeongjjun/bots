@@ -16,7 +16,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
 
-      - run: uv pip install -r requirements.txt
+      - run: uv pip install --system -r requirements.txt
       - name: Run hn_recommender.py
         run: python hn_recommender/hn_recommender.py
         env:
