@@ -10,7 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Astral-Sh/uv-action@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v6
+
       - run: uv pip install -r requirements.txt
       - name: Run hn_recommender.py
         run: python hn_recommender/hn_recommender.py
