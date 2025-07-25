@@ -175,7 +175,7 @@ class ClickHouseIssuesSummarizer:
 
     def generate_summary(self, issues_text: str) -> str:
         """OpenRouter API를 사용해 이슈들을 요약합니다."""
-        prompt = f"""Analyze top 10 most popular ClickHouse GitHub issues from the past week for DevOps team operating ClickHouse in Kubernetes environment. Provide comprehensive summary in Korean.
+        prompt = f"""Analyze top 10 most popular ClickHouse GitHub issues from the past week for DevOps team operating ClickHouse in Kubernetes environment. Provide detailed, comprehensive analysis in Korean.
 
 **Context:**
 - OpenTelemetry-based Log/Metric/Trace data processing
@@ -183,34 +183,50 @@ class ClickHouseIssuesSummarizer:
 - Self-hosted Kubernetes with ClickHouse Operator
 - Issues are pre-sorted by popularity (comments + reactions)
 
-**Summary Structure:**
-1. 📊 Issue statistics and distribution
+**Analysis Requirements:**
+Provide in-depth analysis for each of the 10 issues. DO NOT just summarize - analyze each issue's technical details, root causes, and operational implications.
 
-2. 🔥 Top popular issues analysis:
-   - Rank by engagement score (comments + reactions)
-   - Include GitHub links for each issue
-   - Assess operational impact and urgency
+**Detailed Summary Structure:**
 
-3. 🎯 Operational categorization:
-   - Performance optimization related
-   - Operational stability related
-   - Kubernetes/Operator related
-   - OpenTelemetry/Observability related
-   - Replicated/Materialized Views related
-   - Others (bugs, features, docs)
+1. 📊 **Issue Statistics Overview**
+   - Total issues vs analyzed top 10
+   - Status distribution and engagement metrics
 
-4. ⚠️ Critical actions for ops team:
-   - Immediate response required issues
-   - Performance degradation risks
-   - Data integrity concerns
-   - Kubernetes deployment impacts
+2. 🔥 **Individual Issue Deep Analysis** 
+   For EACH of the top 10 issues, provide:
+   - Issue title, number, and GitHub link
+   - Technical problem description and root cause analysis
+   - Potential impact on our Kubernetes/OpenTelemetry environment
+   - Urgency level (Critical/High/Medium/Low) with reasoning
+   - Specific recommendations for our setup
+   - Related components (Replicated tables, Materialized Views, etc.)
 
-5. 💡 Key insights and recommendations:
-   - Most concerning issues for production environment
-   - Preventive measures to consider
-   - Community engagement patterns
+3. 🎯 **Operational Impact Assessment**
+   Group issues by operational impact:
+   - **CRITICAL**: Immediate action required (data loss, cluster instability)
+   - **HIGH**: Performance/reliability concerns for production
+   - **MEDIUM**: Operational improvements and monitoring
+   - **LOW**: Future considerations and feature requests
 
-Focus on the top 10 issues provided and their operational implications.
+4. ⚠️ **Action Plan for DevOps Team**
+   - Immediate response items (next 24-48 hours)
+   - Short-term monitoring and mitigation (this week)
+   - Long-term improvements and upgrades (next month)
+   - Preventive measures to implement
+
+5. 🛠️ **Technical Deep Dive**
+   - Issues affecting Kubernetes deployments and ClickHouse Operator
+   - OpenTelemetry data ingestion and processing concerns
+   - Replicated table and Materialized View specific problems
+   - Performance optimization opportunities
+
+6. 💡 **Strategic Insights**
+   - Patterns in community concerns
+   - Version-specific issues to watch
+   - Recommendations for cluster configuration
+   - Monitoring and alerting improvements needed
+
+**Important**: Analyze each issue individually with technical depth. Don't just list issues - explain WHY each is important for our specific environment and WHAT we should do about it.
 
 Issues:
 {issues_text}"""
@@ -227,7 +243,7 @@ Issues:
                     "content": prompt
                 }
             ],
-            "max_tokens": 3000,
+            "max_tokens": 8000,
             "temperature": 0.5
         }
         
