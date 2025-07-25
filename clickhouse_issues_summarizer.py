@@ -115,33 +115,49 @@ class ClickHouseIssuesSummarizer:
         def get_popularity_score(issue):
             comments = issue.get("comments", 0)
             reactions = issue.get("reactions", {})
-            if isinstance(reactions, dict):
+            
+            # total_count가 있으면 우선 사용
+            if isinstance(reactions, dict) and "total_count" in reactions:
+                reaction_sum = reactions.get("total_count", 0)
+            elif isinstance(reactions, dict):
                 # reactions 값 중 숫자만 합산 (문자열은 제외)
                 reaction_sum = sum(v for v in reactions.values() if isinstance(v, int))
             else:
                 reaction_sum = 0
+            
             return comments + reaction_sum
         
         sorted_issues = sorted(issues, key=get_popularity_score, reverse=True)
         
-        issues_text = f"ClickHouse 지난 일주일 이슈 목록 ({len(issues)}개, 인기도순 정렬):\n\n"
+        # 상위 10개 인기 이슈만 LLM에 전달 (토큰 절약 및 품질 향상)
+        top_issues = sorted_issues[:10]
         
-        for issue in sorted_issues:
+        # 전체 통계 정보는 유지
+        issues_text = f"ClickHouse 지난 일주일 이슈 통계:\n"
+        issues_text += f"- 전체 이슈: {len(issues)}개\n"
+        issues_text += f"- 분석 대상: 상위 인기 이슈 {len(top_issues)}개\n\n"
+        issues_text += "상위 인기 이슈 목록 (인기도순):\n\n"
+        
+        for issue in top_issues:
             created_at = datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ")
             formatted_date = created_at.strftime("%Y-%m-%d")
             
-            # 인기도 계산
+            # 인기도 계산 (test_fetch.py와 동일한 방식)
             comments_count = issue.get("comments", 0)
             reactions = issue.get("reactions", {})
-            if isinstance(reactions, dict):
+            if isinstance(reactions, dict) and "total_count" in reactions:
+                total_reactions = reactions.get("total_count", 0)
+            elif isinstance(reactions, dict):
                 total_reactions = sum(v for v in reactions.values() if isinstance(v, int))
             else:
                 total_reactions = 0
             
+            engagement_score = comments_count + total_reactions
+            
             issues_text += f"#{issue['number']} - {issue['title']}\n"
             issues_text += f"작성일: {formatted_date}\n"
             issues_text += f"상태: {issue['state']}\n"
-            issues_text += f"인기도: 코멘트 {comments_count}개, 반응 {total_reactions}개\n"
+            issues_text += f"인기도: 코멘트 {comments_count}개, 반응 {total_reactions}개, 점수 {engagement_score}\n"
             
             if issue.get("labels"):
                 labels = [label["name"] for label in issue["labels"]]
@@ -160,39 +176,42 @@ class ClickHouseIssuesSummarizer:
 
     def generate_summary(self, issues_text: str) -> str:
         """OpenRouter API를 사용해 이슈들을 요약합니다."""
-        prompt = f"""Analyze ClickHouse GitHub issues from the past week for DevOps team operating ClickHouse in Kubernetes environment. Provide comprehensive summary in Korean.
+        prompt = f"""Analyze top 10 most popular ClickHouse GitHub issues from the past week for DevOps team operating ClickHouse in Kubernetes environment. Provide comprehensive summary in Korean.
 
 **Context:**
 - OpenTelemetry-based Log/Metric/Trace data processing
 - Tables: Replicated, Materialized Views, Null Engines
 - Self-hosted Kubernetes with ClickHouse Operator
+- Issues are pre-sorted by popularity (comments + reactions)
 
 **Summary Structure:**
-1. 📊 Total issues count and status distribution
+1. 📊 Issue statistics and distribution
 
-2. 🔥 Critical/Popular issues (by comments, labels)
-   - Include GitHub links
-   - Assess operational impact
+2. 🔥 Top popular issues analysis:
+   - Rank by engagement score (comments + reactions)
+   - Include GitHub links for each issue
+   - Assess operational impact and urgency
 
-3. 🎯 Operational categories:
-   - Performance optimization
-   - Operational stability
+3. 🎯 Operational categorization:
+   - Performance optimization related
+   - Operational stability related
    - Kubernetes/Operator related
-   - OpenTelemetry/Observability
-   - Replicated/Materialized Views
+   - OpenTelemetry/Observability related
+   - Replicated/Materialized Views related
    - Others (bugs, features, docs)
 
-4. ⚠️ Key issues for ops team:
-   - Critical issues requiring immediate action
+4. ⚠️ Critical actions for ops team:
+   - Immediate response required issues
    - Performance degradation risks
    - Data integrity concerns
+   - Kubernetes deployment impacts
 
-5. 📈 Trends and patterns:
-   - Recurring issue types
-   - Version-specific trends
-   - Community interest changes
+5. 💡 Key insights and recommendations:
+   - Most concerning issues for production environment
+   - Preventive measures to consider
+   - Community engagement patterns
 
-Include GitHub links and prioritize by operational impact.
+Focus on the top 10 issues provided and their operational implications.
 
 Issues:
 {issues_text}"""
