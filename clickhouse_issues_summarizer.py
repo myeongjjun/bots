@@ -111,51 +111,96 @@ class ClickHouseIssuesSummarizer:
         if not issues:
             return "지난 일주일간 새로운 이슈가 없습니다."
         
-        issues_text = f"ClickHouse 지난 일주일 이슈 목록 ({len(issues)}개):\n\n"
+        # 이슈를 인기도(코멘트 수 + 반응 수)로 정렬
+        sorted_issues = sorted(issues, key=lambda x: x.get("comments", 0) + 
+                              sum(x.get("reactions", {}).values()) if isinstance(x.get("reactions"), dict) else 0, 
+                              reverse=True)
         
-        for issue in issues:
+        issues_text = f"ClickHouse 지난 일주일 이슈 목록 ({len(issues)}개, 인기도순 정렬):\n\n"
+        
+        for issue in sorted_issues:
             created_at = datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ")
             formatted_date = created_at.strftime("%Y-%m-%d")
+            
+            # 인기도 계산
+            comments_count = issue.get("comments", 0)
+            reactions = issue.get("reactions", {})
+            total_reactions = sum(reactions.values()) if isinstance(reactions, dict) else 0
+            popularity_score = comments_count + total_reactions
             
             issues_text += f"#{issue['number']} - {issue['title']}\n"
             issues_text += f"작성일: {formatted_date}\n"
             issues_text += f"상태: {issue['state']}\n"
+            issues_text += f"인기도: 코멘트 {comments_count}개, 반응 {total_reactions}개\n"
+            
             if issue.get("labels"):
                 labels = [label["name"] for label in issue["labels"]]
                 issues_text += f"라벨: {', '.join(labels)}\n"
+            
             issues_text += f"URL: {issue['html_url']}\n"
+            
             if issue["body"] and len(issue["body"]) > 0:
-                # 본문이 너무 길면 처음 200자만 포함
-                body_preview = issue["body"][:200] + "..." if len(issue["body"]) > 200 else issue["body"]
+                # 본문이 너무 길면 처음 300자만 포함 (더 많은 컨텍스트 제공)
+                body_preview = issue["body"][:300] + "..." if len(issue["body"]) > 300 else issue["body"]
                 issues_text += f"설명: {body_preview}\n"
+            
             issues_text += "\n" + "-"*50 + "\n\n"
             
         return issues_text
 
     def generate_summary(self, issues_text: str) -> str:
         """OpenRouter API를 사용해 이슈들을 요약합니다."""
-        prompt = f"""다음은 ClickHouse GitHub 저장소의 지난 일주일간 이슈 목록입니다. 
-이 이슈들을 분석하여 다음 항목들을 포함한 종합적인 요약을 한국어로 작성해주세요:
+        prompt = f"""Analyze ClickHouse GitHub issues from the past week for DevOps team operating ClickHouse in Kubernetes environment. Provide comprehensive summary in Korean.
 
-1. 전체 이슈 개수와 상태별 분포
-2. 주요 카테고리별 분류 (버그, 기능 요청, 성능, 문서화 등)
-3. 가장 중요하거나 관심있는 이슈 3-5개 하이라이트
-4. 전반적인 트렌드나 패턴 분석
-5. 개발자들이 주목해야 할 핵심 포인트
+**Context:**
+- OpenTelemetry-based Log/Metric/Trace data processing
+- Tables: Replicated, Materialized Views, Null Engines
+- Self-hosted Kubernetes with ClickHouse Operator
 
-이슈 목록:
+**Summary Structure:**
+1. 📊 Total issues count and status distribution
+
+2. 🔥 Critical/Popular issues (by comments, labels)
+   - Include GitHub links
+   - Assess operational impact
+
+3. 🎯 Operational categories:
+   - Performance optimization
+   - Operational stability
+   - Kubernetes/Operator related
+   - OpenTelemetry/Observability
+   - Replicated/Materialized Views
+   - Others (bugs, features, docs)
+
+4. ⚠️ Key issues for ops team:
+   - Critical issues requiring immediate action
+   - Performance degradation risks
+   - Data integrity concerns
+
+5. 📈 Trends and patterns:
+   - Recurring issue types
+   - Version-specific trends
+   - Community interest changes
+
+Include GitHub links and prioritize by operational impact.
+
+Issues:
 {issues_text}"""
 
         payload = {
             "model": "anthropic/claude-3.5-sonnet",
             "messages": [
                 {
+                    "role": "system", 
+                    "content": "You are a ClickHouse operations expert. Analyze GitHub issues for DevOps teams running ClickHouse clusters in Kubernetes with OpenTelemetry data processing. Provide technical insights with operational impact assessment. Always respond in Korean."
+                },
+                {
                     "role": "user",
                     "content": prompt
                 }
             ],
-            "max_tokens": 2000,
-            "temperature": 0.7
+            "max_tokens": 3000,
+            "temperature": 0.5
         }
         
         response = requests.post(
