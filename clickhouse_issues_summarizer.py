@@ -166,9 +166,8 @@ class ClickHouseIssuesSummarizer:
             issues_text += f"URL: {issue['html_url']}\n"
             
             if issue["body"] and len(issue["body"]) > 0:
-                # 본문이 너무 길면 처음 300자만 포함 (더 많은 컨텍스트 제공)
-                body_preview = issue["body"][:300] + "..." if len(issue["body"]) > 300 else issue["body"]
-                issues_text += f"설명: {body_preview}\n"
+                # 이슈 본문 전체 포함 (상위 10개만 분석하므로 토큰 사용량 관리 가능)
+                issues_text += f"설명: {issue['body']}\n"
             
             issues_text += "\n" + "-"*50 + "\n\n"
             
