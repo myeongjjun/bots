@@ -112,9 +112,17 @@ class ClickHouseIssuesSummarizer:
             return "지난 일주일간 새로운 이슈가 없습니다."
         
         # 이슈를 인기도(코멘트 수 + 반응 수)로 정렬
-        sorted_issues = sorted(issues, key=lambda x: x.get("comments", 0) + 
-                              sum(x.get("reactions", {}).values()) if isinstance(x.get("reactions"), dict) else 0, 
-                              reverse=True)
+        def get_popularity_score(issue):
+            comments = issue.get("comments", 0)
+            reactions = issue.get("reactions", {})
+            if isinstance(reactions, dict):
+                # reactions 값 중 숫자만 합산 (문자열은 제외)
+                reaction_sum = sum(v for v in reactions.values() if isinstance(v, int))
+            else:
+                reaction_sum = 0
+            return comments + reaction_sum
+        
+        sorted_issues = sorted(issues, key=get_popularity_score, reverse=True)
         
         issues_text = f"ClickHouse 지난 일주일 이슈 목록 ({len(issues)}개, 인기도순 정렬):\n\n"
         
@@ -125,8 +133,10 @@ class ClickHouseIssuesSummarizer:
             # 인기도 계산
             comments_count = issue.get("comments", 0)
             reactions = issue.get("reactions", {})
-            total_reactions = sum(reactions.values()) if isinstance(reactions, dict) else 0
-            popularity_score = comments_count + total_reactions
+            if isinstance(reactions, dict):
+                total_reactions = sum(v for v in reactions.values() if isinstance(v, int))
+            else:
+                total_reactions = 0
             
             issues_text += f"#{issue['number']} - {issue['title']}\n"
             issues_text += f"작성일: {formatted_date}\n"
