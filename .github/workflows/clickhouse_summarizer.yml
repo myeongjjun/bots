@@ -1,0 +1,27 @@
+name: ClickHouse Issues Summarizer
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 매주 일요일 오전 9시 (UTC 기준, 한국시간 오후 6시)
+    - cron: '0 9 * * 0'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv sync --frozen
+      - name: Run ClickHouse Issues Summarizer
+        run: uv run python clickhouse_issues_summarizer.py
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
