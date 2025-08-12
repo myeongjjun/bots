@@ -15,6 +15,14 @@ git config user.name "myeongjjun"
 git config user.email "myeongjjun@users.noreply.github.com"
 ```
 
+### Security Review Process
+Before committing any changes, always verify:
+- No API keys, tokens, or secrets in code or files
+- No internal company information or references
+- No personal email addresses (use GitHub noreply email)
+- No internal URLs or system details
+- Configuration files contain only public information
+
 ### Commit Message Format
 Follow conventional commits format:
 - Use descriptive commit messages
