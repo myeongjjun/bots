@@ -6,8 +6,8 @@ MAX_TELEGRAM_LEN = 4000  # 4096 is limit; keep some buffer for Markdown issues
 
 TELEGRAM_TOKEN = os.environ["TG_TOKEN"]          # GitHub secret TG_TOKEN
 TELEGRAM_CHAT_ID = os.environ["TG_CHAT_ID"]      # GitHub secret TG_CHAT_ID
-OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]  # GitHub secret OPENROUTER_API_KEY
-OPENROUTER_MODEL = "google/gemini-2.0-flash-001"
+CHAT_API_KEY = os.environ["CHAT_API_KEY"]  # GitHub secret CHAT_API_KEY
+CHAT_MODEL = "google/gemini-2.0-flash-001"
 
 def md_escape(text: str) -> str:
     return text  # No escaping needed for plain text
@@ -70,11 +70,11 @@ def translate_titles_with_openrouter(top5, rest):
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Authorization": f"Bearer {CHAT_API_KEY}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": OPENROUTER_MODEL,
+                "model": CHAT_MODEL,
                 "messages": [
                     {"role": "system", "content": "너는 영어 기술 뉴스 제목을 한국어로 자연스럽게 번역하고, 한국 개발자에게 흥미로운 기사를 선별해서 추천하는 AI야. 결과를 마크다운 링크, 굵은 글씨 등 어떤 마크다운 문법도 사용하지 말고, 순수 텍스트로만 출력해."},
                     {"role": "user", "content": prompt}

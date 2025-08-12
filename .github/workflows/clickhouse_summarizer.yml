@@ -21,7 +21,7 @@ jobs:
       - name: Run ClickHouse Issues Summarizer
         run: uv run python clickhouse_issues_summarizer.py
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CHAT_API_KEY: ${{ secrets.CHAT_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}

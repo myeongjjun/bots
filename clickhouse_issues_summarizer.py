@@ -50,8 +50,8 @@ def send_to_telegram(message: str, telegram_token: str, telegram_chat_id: str):
 
 
 class ClickHouseIssuesSummarizer:
-    def __init__(self, openrouter_api_key: str, github_token: str = None, telegram_token: str = None, telegram_chat_id: str = None):
-        self.openrouter_api_key = openrouter_api_key
+    def __init__(self, chat_api_key: str, github_token: str = None, telegram_token: str = None, telegram_chat_id: str = None):
+        self.chat_api_key = chat_api_key
         self.github_token = github_token
         self.telegram_token = telegram_token
         self.telegram_chat_id = telegram_chat_id
@@ -62,7 +62,7 @@ class ClickHouseIssuesSummarizer:
         self.github_headers["Accept"] = "application/vnd.github.v3+json"
         
         self.openrouter_headers = {
-            "Authorization": f"Bearer {openrouter_api_key}",
+            "Authorization": f"Bearer {chat_api_key}",
             "Content-Type": "application/json"
         }
 
@@ -174,7 +174,7 @@ class ClickHouseIssuesSummarizer:
         return issues_text
 
     def generate_summary(self, issues_text: str) -> str:
-        """OpenRouter API를 사용해 이슈들을 요약합니다."""
+        """Chat Completions API를 사용해 이슈들을 요약합니다."""
         prompt = f"""Analyze top 10 most popular ClickHouse GitHub issues from the past week for DevOps team operating ClickHouse in Kubernetes environment. Provide detailed, comprehensive analysis in Korean.
 
 **Context:**
@@ -254,7 +254,7 @@ Issues:
         )
         
         if response.status_code != 200:
-            return f"OpenRouter API 요청 실패: {response.status_code} - {response.text}"
+            return f"Chat API 요청 실패: {response.status_code} - {response.text}"
         
         try:
             result = response.json()
@@ -320,14 +320,14 @@ Issues:
 def main():
     """메인 함수"""
     # 환경 변수에서 API 키를 가져옵니다
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+    chat_api_key = os.getenv("CHAT_API_KEY")
     github_token = os.getenv("GITHUB_TOKEN")  # 선택사항
     telegram_token = os.getenv("TG_TOKEN")  # 선택사항
     telegram_chat_id = os.getenv("TG_CHAT_ID")  # 선택사항
     
-    if not openrouter_api_key:
-        print("오류: OPENROUTER_API_KEY 환경 변수가 설정되지 않았습니다.")
-        print("GitHub Secrets에 OPENROUTER_API_KEY를 설정하세요.")
+    if not chat_api_key:
+        print("오류: CHAT_API_KEY 환경 변수가 설정되지 않았습니다.")
+        print("GitHub Secrets에 CHAT_API_KEY를 설정하세요.")
         return
     
     if not github_token:
@@ -341,7 +341,7 @@ def main():
         print()
     
     summarizer = ClickHouseIssuesSummarizer(
-        openrouter_api_key=openrouter_api_key,
+        chat_api_key=chat_api_key,
         github_token=github_token,
         telegram_token=telegram_token,
         telegram_chat_id=telegram_chat_id
