@@ -325,7 +325,7 @@ def main():
     github_token = os.getenv("GITHUB_TOKEN")  # 선택사항
     telegram_token = os.getenv("TG_TOKEN")  # 선택사항
     telegram_chat_id = os.getenv("TG_CHAT_ID")  # 선택사항
-    chat_model = os.getenv("CHAT_MODEL_SMART")  # 선택사항
+    chat_model = os.getenv("CHAT_MODEL_SMART") or None  # 선택사항
     
     if not chat_api_key:
         print("오류: CHAT_API_KEY 환경 변수가 설정되지 않았습니다.")
