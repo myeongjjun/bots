@@ -48,6 +48,10 @@ Both scripts use:
 - `TG_CHAT_ID` - Telegram chat ID
 - `GITHUB_TOKEN` - GitHub API token (optional)
 
+Model configuration (optional):
+- `CHAT_MODEL_FAST` - Fast/cost-effective model for simple tasks (default: google/gemini-2.0-flash-001)
+- `CHAT_MODEL_SMART` - High-performance model for complex analysis (default: anthropic/claude-3.5-sonnet)
+
 ## Code Quality Rules
 
 ### API Safety

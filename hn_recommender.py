@@ -7,7 +7,7 @@ MAX_TELEGRAM_LEN = 4000  # 4096 is limit; keep some buffer for Markdown issues
 TELEGRAM_TOKEN = os.environ["TG_TOKEN"]          # GitHub secret TG_TOKEN
 TELEGRAM_CHAT_ID = os.environ["TG_CHAT_ID"]      # GitHub secret TG_CHAT_ID
 CHAT_API_KEY = os.environ["CHAT_API_KEY"]  # GitHub secret CHAT_API_KEY
-CHAT_MODEL = "google/gemini-2.0-flash-001"
+CHAT_MODEL = os.environ.get("CHAT_MODEL_FAST", "google/gemini-2.0-flash-001")  # GitHub secret CHAT_MODEL_FAST (optional)
 
 def md_escape(text: str) -> str:
     return text  # No escaping needed for plain text

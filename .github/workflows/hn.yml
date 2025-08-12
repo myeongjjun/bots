@@ -21,3 +21,4 @@ jobs:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           CHAT_API_KEY: ${{ secrets.CHAT_API_KEY }}
+          CHAT_MODEL_FAST: ${{ secrets.CHAT_MODEL_FAST }}

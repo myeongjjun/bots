@@ -50,11 +50,12 @@ def send_to_telegram(message: str, telegram_token: str, telegram_chat_id: str):
 
 
 class ClickHouseIssuesSummarizer:
-    def __init__(self, chat_api_key: str, github_token: str = None, telegram_token: str = None, telegram_chat_id: str = None):
+    def __init__(self, chat_api_key: str, github_token: str = None, telegram_token: str = None, telegram_chat_id: str = None, chat_model: str = None):
         self.chat_api_key = chat_api_key
         self.github_token = github_token
         self.telegram_token = telegram_token
         self.telegram_chat_id = telegram_chat_id
+        self.chat_model = chat_model or "anthropic/claude-3.5-sonnet"
         self.github_headers = {}
         
         if github_token:
@@ -232,7 +233,7 @@ Issues:
 {issues_text}"""
 
         payload = {
-            "model": "anthropic/claude-3.5-sonnet",
+            "model": self.chat_model,
             "messages": [
                 {
                     "role": "system", 
@@ -324,6 +325,7 @@ def main():
     github_token = os.getenv("GITHUB_TOKEN")  # 선택사항
     telegram_token = os.getenv("TG_TOKEN")  # 선택사항
     telegram_chat_id = os.getenv("TG_CHAT_ID")  # 선택사항
+    chat_model = os.getenv("CHAT_MODEL_SMART")  # 선택사항
     
     if not chat_api_key:
         print("오류: CHAT_API_KEY 환경 변수가 설정되지 않았습니다.")
@@ -344,7 +346,8 @@ def main():
         chat_api_key=chat_api_key,
         github_token=github_token,
         telegram_token=telegram_token,
-        telegram_chat_id=telegram_chat_id
+        telegram_chat_id=telegram_chat_id,
+        chat_model=chat_model
     )
     summarizer.run()
 
