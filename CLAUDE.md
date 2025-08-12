@@ -48,6 +48,33 @@ Both scripts use:
 - `TG_CHAT_ID` - Telegram chat ID
 - `GITHUB_TOKEN` - GitHub API token (optional)
 
+## Code Quality Rules
+
+### API Safety
+- Always set timeout for external API calls
+- Implement proper error handling and response validation
+- Consider rate limiting for API requests
+
+### GitHub Actions Guidelines
+- Validate workflow syntax locally before committing
+- Use minimum required permissions for secrets
+- Fix and re-run failed workflows immediately
+
+### Code Standards
+- Extract hardcoded values to environment variables or constants
+- Follow single responsibility principle for functions
+- Include specific error messages in exception handling
+
+### Telegram Bot Specific
+- Check message length limits (4096 characters)
+- Handle markdown escaping properly
+- Validate bot token before use
+
+### Dependency Management
+- Always commit uv.lock file with dependency changes
+- Review security implications of new packages
+- Separate dependency updates into dedicated commits
+
 ## Development Commands
 
 - **Run tests**: `pytest` (if tests exist)
