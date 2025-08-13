@@ -2,6 +2,8 @@ name: hn_recommender
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'  # 10 AM KST (UTC+9)
 
 jobs:
   run:
