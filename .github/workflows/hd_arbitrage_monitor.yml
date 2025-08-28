@@ -1,0 +1,94 @@
+name: HD현대 합병 아비트리지 모니터링
+
+on:
+  schedule:
+    # 한국 주식시장 시간 (KST 09:00-15:30) 동안 10분마다 실행
+    # GitHub Actions는 UTC 기준이므로 KST-9시간으로 계산
+    # KST 09:00 = UTC 00:00, KST 15:30 = UTC 06:30
+    # 월-금요일만 실행 (한국 주식시장 개장일)
+    - cron: '*/10 0-6 * * 1-5'  # 월-금 UTC 00:00-06:30 매 10분
+    
+  # 수동 실행도 가능하도록 설정
+  workflow_dispatch:
+    inputs:
+      send_always:
+        description: '임계값 상관없이 항상 알림 전송'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  arbitrage_check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: Python 설정
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: uv 설정
+      uses: astral-sh/setup-uv@v6
+      
+    - name: 의존성 설치
+      run: uv sync --frozen
+        
+    - name: HD현대 아비트리지 체크 실행
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN_TRADEPAL }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        GITHUB_ACTIONS: true
+      run: |
+        echo "🔍 HD현대 합병 아비트리지 체크 시작..."
+        echo "현재 시간 (UTC): $(date -u)"
+        echo "현재 시간 (KST): $(TZ=Asia/Seoul date)"
+        
+        # 한국 시간이 주식시장 시간(09:00-15:30)인지 확인
+        KST_HOUR=$(TZ=Asia/Seoul date +%H)
+        KST_MINUTE=$(TZ=Asia/Seoul date +%M)
+        KST_DAY=$(TZ=Asia/Seoul date +%u)  # 1=월, 7=일
+        
+        echo "KST 시간: ${KST_HOUR}:${KST_MINUTE}, 요일: ${KST_DAY}"
+        
+        # 주말 체크 (토=6, 일=7)
+        if [ "$KST_DAY" -gt 5 ]; then
+          echo "⏰ 주말이므로 아비트리지 체크를 건너뜁니다."
+          exit 0
+        fi
+        
+        # 한국 주식시장 시간 체크 (09:00-15:30)
+        CURRENT_TIME_MINUTES=$((KST_HOUR * 60 + KST_MINUTE))
+        MARKET_OPEN_MINUTES=$((9 * 60))        # 09:00
+        MARKET_CLOSE_MINUTES=$((15 * 60 + 30)) # 15:30
+        
+        if [ "$CURRENT_TIME_MINUTES" -lt "$MARKET_OPEN_MINUTES" ] || [ "$CURRENT_TIME_MINUTES" -gt "$MARKET_CLOSE_MINUTES" ]; then
+          echo "⏰ 한국 주식시장 시간(09:00-15:30)이 아니므로 아비트리지 체크를 건너뜁니다."
+          exit 0
+        fi
+        
+        echo "✅ 한국 주식시장 개장 시간입니다. 아비트리지 체크를 실행합니다."
+        uv run python hd_merger_arbitrage.py
+        
+    - name: 체크 완료 알림
+      if: success()
+      run: |
+        echo "✅ HD현대 아비트리지 체크가 성공적으로 완료되었습니다."
+        
+    - name: 오류 발생시 알림
+      if: failure()
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN_TRADEPAL }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+      run: |
+        echo "❌ HD현대 아비트리지 체크 중 오류가 발생했습니다."
+        
+        # 텔레그램으로 오류 알림 전송 (선택사항)
+        if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT_ID" ]; then
+          curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+            -d "chat_id=$TG_CHAT_ID" \
+            -d "text=🚨 HD현대 아비트리지 모니터링 오류%0A%0A워크플로우 실행 중 오류가 발생했습니다.%0A시간: $(TZ=Asia/Seoul date)%0A%0A자세한 내용은 GitHub Actions 로그를 확인해주세요." \
+            -d "disable_web_page_preview=true"
+        fi
